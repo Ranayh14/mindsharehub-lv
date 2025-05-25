@@ -92,7 +92,6 @@ protected $appends = ['is_liked','created_at_human','total_comments','likes_coun
 
     public function getLikesCountAttribute()
     {
-        return $this->attributes['likes_count']     // dari withCount
-            ?? $this->likedUsers()->count();
+        return $this->likedUsers()->count();
     }
 }

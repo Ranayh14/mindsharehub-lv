@@ -22,9 +22,9 @@ class DashboardController extends Controller
         ->latest()
         ->paginate(10)
         ->through(fn ($p) => $p->append(['is_liked','created_at_human']));
-    
+
         return Inertia::render('Dashboard/User', [
             'posts' => $posts,
         ]);
-    }     
+    }
 }

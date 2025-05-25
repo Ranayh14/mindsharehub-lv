@@ -13,6 +13,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DiaryController;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 /*
 |---------------------------------------------------------------------------
@@ -23,6 +24,8 @@ use App\Http\Controllers\DiaryController;
 |
 */
 
+// Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+
 // Public pages
 Route::get('/', fn() => Inertia::render('Home'))->name('home');
 Route::get('/help', fn() => Inertia::render('Help'))->name('help');
@@ -32,23 +35,13 @@ Route::get('/about', fn() => Inertia::render('AboutUs'))->name('about');
 Route::middleware('guest')->group(function () {
     // Registration
     Route::get('/register', [PageController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.attempt');
 
     // Login
     Route::get('/login', [PageController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 });
 
-// Logout (authenticated users only)
-Route::post('/logout', [AuthController::class, 'logout'])
-     ->middleware('auth')
-     ->name('logout');
-
 // Authenticated routes
-Route::middleware('auth')->group(function () {
-    // User Dashboard
-    Route::get('/admin/dashboard', [PageController::class, 'showAdminDashboard'])->name('admin.dashboard');
-    
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', DashboardController::class)
          ->name('dashboard');
 
