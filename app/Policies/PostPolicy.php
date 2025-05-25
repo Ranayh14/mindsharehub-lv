@@ -29,7 +29,7 @@ class PostPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return true;  // Allow all authenticated users to create posts
     }
 
     /**

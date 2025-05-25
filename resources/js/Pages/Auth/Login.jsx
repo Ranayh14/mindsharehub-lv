@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { Ziggy } from '@/ziggy'; // import route file hasil generate
@@ -12,12 +12,15 @@ export default function Login() {
   });
 
   const { flash = {} } = usePage().props;
-  const [message, setMessage] = useState(flash.success || flash.error);
+  const [message, setMessage] = React.useState(flash.success || flash.error);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+      router.visit('/dashboard');
+      return;
     }
   }, []);
 

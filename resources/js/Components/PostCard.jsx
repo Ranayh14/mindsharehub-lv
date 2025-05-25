@@ -9,6 +9,7 @@ import { Inertia } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/react';
 import { Ziggy } from '@/ziggy';
 import ConfirmDeleteModal from './Modal/ConfirmDeleteModal';
+import CommentCard from './CommentCard';
 
 export default function PostCard({ post }) {
   const { auth } = usePage().props;
@@ -34,19 +35,14 @@ export default function PostCard({ post }) {
     try {
       const res = await axios.post(route('posts.like', { post: localPost.id }, false, Ziggy));
   
-      // Perbarui state localPost dengan data terbaru dari server
+      // Update local state immediately
       setLocalPost(prev => ({
         ...prev,
-        is_liked: res.data.status === 'liked', // Update status like
-        likes_count: res.data.likes_count, // Update likes count
-        total_comments: res.data.total_comments // Update jumlah komentar
+        is_liked: res.data.status === 'liked',
+        likes_count: res.data.likes_count,
+        total_comments: res.data.total_comments
       }));
-  
-      // Reload data secara realtime tanpa perlu refresh halaman
-      Inertia.reload({
-        only: ['posts'], // Reload hanya bagian posts yang ter-reload
-      });
-  
+      
     } catch (err) {
       console.error('Gagal like:', err.response);
     }
@@ -133,6 +129,25 @@ export default function PostCard({ post }) {
     setReportModalOpen(true);
   };
 
+  const handleCommentUpdate = (commentId, updates) => {
+    if (updates === null) {
+      // Comment was deleted
+      setLocalPost(prev => ({
+        ...prev,
+        comments: prev.comments.filter(c => c.id !== commentId),
+        total_comments: prev.total_comments - 1
+      }));
+    } else {
+      // Comment was updated
+      setLocalPost(prev => ({
+        ...prev,
+        comments: prev.comments.map(c => 
+          c.id === commentId ? { ...c, ...updates } : c
+        )
+      }));
+    }
+  };
+
   return (
     <div className="bg-[#2B1B54] text-white p-6 rounded-lg mt-6 mb-6">
       <div className="flex items-start justify-between">
@@ -197,36 +212,12 @@ export default function PostCard({ post }) {
 
       {showComments && (
         <div className="mt-4 space-y-3">
-          {post.comments.map(c => (
-            <div key={c.id} className="bg-gray-700 p-4 rounded">
-              <strong className="text-sm">{c.user.username}:</strong>
-              <p className="text-sm mt-1">{c.comment}</p>
-
-              <div className="flex gap-4 mt-3 text-sm">
-                <button onClick={() => handleCommentLike(c.id)} className="flex items-center gap-2 text-white hover:text-red-400">
-                  {c.is_liked ? '❤️' : '🤍'} {c.total_likes} Likes
-                </button>
-
-                <button onClick={() => handleReportComment(c.id)} className="text-red-500 hover:text-red-400">
-                  Laporkan
-                </button>
-
-                <button onClick={() => handleReplyComment(c.id, c.user.username)} className="text-blue-500 hover:text-blue-400">
-                  Balas
-                </button>
-              </div>
-
-              {/* Balasan untuk setiap komentar */}
-              {c.replies && c.replies.length > 0 && (
-                <div className="mt-4 pl-5 border-l-2 border-gray-600 space-y-3">
-                  {c.replies.map(reply => (
-                    <div key={reply.id} className="bg-gray-600 p-3 rounded">
-                      <strong>{reply.user.username}:</strong> {reply.comment}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          {localPost.comments.map(c => (
+            <CommentCard 
+              key={c.id} 
+              comment={c}
+              onCommentUpdate={handleCommentUpdate}
+            />
           ))}
 
           {/* Form komentar yang sudah diisi dengan username untuk balasan */}
@@ -242,7 +233,7 @@ export default function PostCard({ post }) {
               value={commentFormData}
               onChange={(e) => {
                 setCommentFormData(e.target.value);
-                commentForm.setData('comment', e.target.value); // Update form data
+                commentForm.setData('comment', e.target.value);
               }}
             />
             <button
