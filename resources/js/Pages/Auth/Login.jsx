@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { Ziggy } from '@/ziggy'; // import route file hasil generate
+import axios from 'axios';
+import { router } from '@inertiajs/react';
 
 export default function Login() {
   const { data, setData, post, processing, errors } = useForm({
@@ -9,20 +11,39 @@ export default function Login() {
     password: '',
   });
 
-  const flash = usePage().props?.flash || {};
-  const [message, setMessage] = useState(flash.success);
+  const { flash = {} } = usePage().props;
+  const [message, setMessage] = useState(flash.success || flash.error);
 
   useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => setMessage(null), 5000);
-      return () => clearTimeout(timer);
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-  }, [message]);
+  }, []);
 
   function submit(e) {
     e.preventDefault();
-    post(route('login.attempt', {}, false, Ziggy));
+
+    axios.post('/api/login', data)
+      .then(response => {
+        const token = response.data.token;
+        const redirectUrl = response.data.redirect || '/dashboard';
+
+        if (token) {
+          localStorage.setItem('authToken', token);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          router.visit(redirectUrl);
+        } else {
+          alert('Token tidak ditemukan di response');
+        }
+      })
+      .catch(error => {
+        console.error('Login failed:', error.response?.data || error.message);
+        alert('Login gagal, periksa email dan password');
+      });
   }
+
 
   return (
     <>
@@ -30,6 +51,11 @@ export default function Login() {
       <div className="bg-[#2B1B54] h-screen flex items-center justify-center m-0">
         <div className="flex flex-col md:flex-row bg-[#2B1B54] shadow-lg overflow-hidden w-full h-screen relative">
 
+          {message && (
+            <div className={`mb-4 p-3 text-sm rounded text-center ${flash.error ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} border`}>
+              {message}
+            </div>
+          )}
           {/* Left Side Illustration */}
           <div
             className="relative flex-grow bg-cover bg-center h-full hidden md:block"
