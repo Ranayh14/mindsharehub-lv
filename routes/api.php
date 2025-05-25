@@ -1,22 +1,42 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DiaryController;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\DiaryController;
 
-Route::post('/register', [AuthController::class, 'register'])->name('register.attempt');
-Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout'])->name('logout');
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application.
+|
+*/
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
-Route::middleware('auth:sanctum')->group(function() {
-    Route::apiResource('diaries', DiaryController::class);
+// Guest routes (No auth middleware)
+Route::middleware('guest')->group(function () {
+    Route::post('/register', [AuthController::class, 'register'])->name('api.register');
+    Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 });
 
-Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
-    return response()->json($request->user()->only(['id', 'username', 'email', 'roles']));
+// Authenticated routes (Require sanctum token or similar)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
+
+    // Post routes
+    Route::apiResource('posts', PostController::class)->only(['store', 'update', 'destroy', 'index', 'show']);
+    Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])->name('api.posts.like');
+
+    // Comment routes
+    Route::apiResource('comments', CommentController::class)->only(['store', 'update', 'destroy', 'index', 'show']);
+    Route::post('/comments/{comment}/like', [CommentController::class, 'toggleLike'])->name('api.comments.like');
+
+    // Report routes
+    // Route::post('/reports', [ReportController::class, 'store'])->name('api.reports.store');
+
+    // Diary routes
+    Route::apiResource('diaries', DiaryController::class)->only(['index', 'store', 'update', 'destroy']);
 });

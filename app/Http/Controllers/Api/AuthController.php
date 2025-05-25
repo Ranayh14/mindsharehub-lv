@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -20,15 +20,15 @@ class AuthController extends Controller
     {
         try {
             $request->validate([
-                'email'                  => 'required|email|unique:users',
-                'password'               => 'required|min:8|confirmed',
-                'terms'                  => 'accepted',
+                'email'    => 'required|email|unique:users',
+                'password' => 'required|min:8|confirmed',
+                'terms'    => 'accepted',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->validator->errors()->first(),
-                'errors' => $e->errors(),
+                'errors'  => $e->errors(),
             ], 422);
         }
 
@@ -38,16 +38,18 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'username'    => User::generateUsername(),
-            'email'       => $request->email,
-            'password'    => bcrypt($request->password),
-            'roles'       => 'user',
+            'username' => User::generateUsername(),
+            'email'    => $request->email,
+            'password' => bcrypt($request->password),
+            'roles'    => 'user',
         ]);
 
         return response()->json([
             'message' => 'User registered successfully',
+            'user'    => $user->only(['id', 'username', 'email', 'roles']),
         ], 201);
     }
+
 
     public function showLogin()
     {
@@ -56,7 +58,6 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        
         try {
             $credentials = $request->validate([
                 'email'    => 'required|email',
@@ -65,54 +66,45 @@ class AuthController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Input is not valid',
+                'message' => 'Input tidak valid',
                 'errors'  => $e->errors(),
             ], 422);
         }
 
-        $email = $credentials['email'];
-        $password = $credentials['password'];
-
-        // Cek kredensial admin dari config
-        if ($email === config('admin.email') && $password === config('admin.password')) {
-            $admin = User::where('email', $email)->first();
-
-            if ($admin) {
-                Auth::login($admin);
-                $token = $admin->createToken('api_token')->plainTextToken;
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Admin login successful',
-                    'token'   => $token,
-                    'user'    => $admin,
-                    'redirect' => route('admin.dashboard')
-                ], 200);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Admin account not found in the database.',
-            ], 404);
-        }
-
-        // Login untuk user biasa dan admin dari database
+        // Login berhasil?
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            $token = $user->createToken('api_token')->plainTextToken;
+
+            // Cek apakah akun dibanned
+            if ($user->is_banned) {
+                Auth::logout();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akun Anda telah diblokir: ' . $user->ban_reason,
+                ], 403);
+            }
+
+            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'success' => true,
-                'message' => 'Login successful',
+                'message' => 'Login berhasil',
                 'token'   => $token,
-                'user'    => $user,
-                'redirect' => $user->roles === 'admin' ? route('admin.dashboard') : route('dashboard'),
-            ], 200);
+                'user'    => [
+                    'id'       => $user->id,
+                    'username' => $user->username,
+                    'email'    => $user->email,
+                    'roles'    => $user->roles,
+                ],
+                'redirect' => $user->roles === 'admin' 
+                    ? route('admin.dashboard', [], false) 
+                    : route('dashboard', [], false),
+            ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Invalid credentials',
+            'message' => 'Email atau password salah',
         ], 401);
     }
     
