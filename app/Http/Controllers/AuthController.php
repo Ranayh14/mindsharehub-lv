@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -18,19 +15,11 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        try {
-            $request->validate([
-                'email'    => 'required|email|unique:users',
-                'password' => 'required|min:8|confirmed',
-                'terms'    => 'accepted',
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->validator->errors()->first(),
-                'errors'  => $e->errors(),
-            ], 422);
-        }
+        $request->validate([
+            'email'                  => 'required|email|unique:users',
+            'password'               => 'required|min:8|confirmed',
+            'terms'                  => 'accepted',
+        ]);
 
         // Cegah registrasi dengan email admin
         if ($request->email === config('admin.email')) {
@@ -38,18 +27,14 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'username' => User::generateUsername(),
-            'email'    => $request->email,
-            'password' => bcrypt($request->password),
-            'roles'    => 'user',
+            'username'    => User::generateUsername(),
+            'email'       => $request->email,
+            'password'        => bcrypt($request->password),
+            'roles'       => 'user',
         ]);
 
-        return response()->json([
-            'message' => 'User registered successfully',
-            'user'    => $user->only(['id', 'username', 'email', 'roles']),
-        ], 201);
+        return redirect()->route('login')->with('success', 'Registrasi berhasil. Silakan login.');
     }
-
 
     public function showLogin()
     {
@@ -58,66 +43,49 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        try {
-            $credentials = $request->validate([
-                'email'    => 'required|email',
-                'password' => 'required',
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Input tidak valid',
-                'errors'  => $e->errors(),
-            ], 422);
-        }
-
-        // Login berhasil?
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-
-            // Cek apakah akun dibanned
-            if ($user->is_banned) {
-                Auth::logout();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akun Anda telah diblokir: ' . $user->ban_reason,
-                ], 403);
+        $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        ]);
+    
+        $email = $request->email;
+        $pw    = $request->password;
+    
+        if ($email === config('admin.email') && $pw === config('admin.password')) {
+            // Cari user admin di database
+            $admin = User::where('email', $email)->first();
+    
+            if ($admin) {
+                Auth::login($admin);
+                return redirect()->route('admin.dashboard');
             }
-
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Login berhasil',
-                'token'   => $token,
-                'user'    => [
-                    'id'       => $user->id,
-                    'username' => $user->username,
-                    'email'    => $user->email,
-                    'roles'    => $user->roles,
-                ],
-                'redirect' => $user->roles === 'admin' 
-                    ? route('admin.dashboard', [], false) 
-                    : route('dashboard', [], false),
+    
+            return back()->withErrors([
+                'email' => 'Akun admin tidak ditemukan di database.',
             ]);
         }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Email atau password salah',
-        ], 401);
+    
+        if (Auth::attempt(['email' => $email, 'password' => $pw])) {
+            $request->session()->regenerate();
+    
+            return Auth::user()->roles === 'admin'
+                ? redirect()->route('admin.dashboard')
+                : redirect()->route('dashboard');
+        }
+    
+        return back()->withErrors([
+            'email' => 'Email atau password salah',
+        ]);
     }
     
     
 
     public function logout(Request $request)
     {
-        $user = $request->user();
+        Auth::logout(); // Logout user dari sesi
+        $request->session()->invalidate(); // Hapus semua data sesi
+        $request->session()->regenerateToken(); // Regenerasi token CSRF untuk keamanan
 
-        $user->currentAccessToken()->delete();
-
-        return response()->json([
-            'message' => 'Logged out. Token deleted',
-        ], 200);
+        return redirect()->route('home'); // Arahkan ke halaman landing page
     }
 }

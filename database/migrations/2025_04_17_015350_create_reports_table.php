@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('post_id')->constrained('posts')->onDelete('cascade');
-            $table->foreignId('reported_by')->constrained('users')->onDelete('cascade');
-            $table->string('reason');
-            $table->text('description');
-            $table->enum('status', ['aktif', 'selesai', 'ditolak'])->default('aktif');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('reported_user_id')->constrained('users')->onDelete('cascade');
+            $table->text('content');
+            $table->enum('status', ['pending', 'solved', 'rejected'])->default('pending');
+            $table->string('type');
             $table->timestamps();
         });
     }
-    
+
 
     /**
      * Reverse the migrations.

@@ -2,34 +2,19 @@ import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import axios from 'axios';
+import { Ziggy } from '@/ziggy';
 
 export default function Sidebar() {
   const { auth } = usePage().props;
   const user = auth.user || {};
-  const [showMenu, setShowMenu] = useState(false);
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem('token'); // Ambil token dari localStorage
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-      if (!token) {
-        console.error('Token not found. User might not be logged in.');
-        return;
-      }
-
-      await axios.post('http://127.0.0.1:8000/api/logout', null, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Hapus token dari localStorage
-      localStorage.removeItem('token');
-
-      // Redirect ke login
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
+  const handleLogout = () => {
+    axios.post(route('logout', {}, false, Ziggy)) .then(() => {
+      window.location.href = route('home', {}, false, Ziggy);
+    }).catch(error => {
+      console.error("Logout failed:", error);
+    });
   };
 
   return (
@@ -67,12 +52,10 @@ export default function Sidebar() {
           </Link>
         </nav>
       </div>
-
-      {/* Profile + Logout Menu */}
       <div className="relative">
         <div
           className="flex items-center p-4 bg-purple-700 rounded-full cursor-pointer"
-          onClick={() => setShowMenu(!showMenu)}
+          onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
         >
           <img
             src={user.profile_picture ? `/images/${user.profile_picture}` : '/images/default.png'}
@@ -94,11 +77,12 @@ export default function Sidebar() {
           <i className="fas fa-ellipsis-h text-gray-400 ml-2"></i>
         </div>
 
-        {showMenu && (
-          <div className="absolute bottom-16 left-0 w-full bg-[#1e1f2c] border border-gray-600 rounded shadow-lg z-10">
+        {/* Dropdown Menu */}
+        {isProfileMenuOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
             <button
               onClick={handleLogout}
-              className="w-full text-left p-3 text-red-400 hover:bg-red-500 hover:text-white transition"
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               Logout
             </button>

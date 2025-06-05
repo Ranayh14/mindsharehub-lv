@@ -1,26 +1,13 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { usePage, Head, Link } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import PostCard from '@/Components/PostCard';
-import NewPostForm from '@/Components/NewPostForm';
-import axios from 'axios';
-import useAuth from '@/hooks/useAuth';
+import NewPostForm from '@/Components/NewPostForm'; // Import NewPostForm
 
 export default function UserDashboard() {
   const { posts, auth } = usePage().props;
   const currentUser = auth.user;
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-    if (!token) {
-      router.visit('/login');
-    }
-  }, []);
 
-  useAuth();  
-  
   return (
     <DashboardLayout>
       <Head title="Dashboard" />

@@ -1,30 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Head, Link, usePage, router } from '@inertiajs/react';
-import { Ziggy } from '@/ziggy';
+import React, { useState, useEffect } from 'react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import { Ziggy } from '@/ziggy';
 import TermsModal from '@/Components/TermsModal';
 import '@dotlottie/player-component';
 
 export default function Register() {
-  const [data, setData] = useState({
+  const { data, setData, post, processing, errors, reset } = useForm({
     email: '',
     password: '',
     password_confirmation: '',
     terms: false,
   });
 
-  const [errors, setErrors] = useState({});
-  const [processing, setProcessing] = useState(false);
-  const [message, setMessage] = useState(null);
   const { flash = {} } = usePage().props;
   const [showTerms, setShowTerms] = useState(false);
-
-  useEffect(() => {
-    if (flash.success || flash.error) {
-      setMessage(flash.success || flash.error);
-    }
-  }, [flash]);
+  const [message, setMessage] = useState(flash.success || flash.error);
 
   useEffect(() => {
     let timer;
@@ -34,43 +25,13 @@ export default function Register() {
     return () => timer && clearTimeout(timer);
   }, [message]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setData({
-      ...data,
-      [name]: type === 'checkbox' ? checked : value,
-    });
-  };
-
-  const handleSubmit = async (e) => {
+  const submit = (e) => {
     e.preventDefault();
-    setProcessing(true);
-    setErrors({});
-    try {
-      const response = await axios.post('/api/register', data);
-      setProcessing(false);
-      setData({
-        email: '',
-        password: '',
-        password_confirmation: '',
-        terms: false,
-      });
-
-      // Redirect ke halaman login dengan flash message
-      router.visit('/login', {
-        data: { success: 'Pendaftaran berhasil! Silakan login.' },
-        preserveState: false,
-        replace: true,
-      });
-    } catch (error) {
-      setProcessing(false);
-      if (error.response?.status === 422) {
-        setErrors(error.response.data.errors || {});
-        setMessage(error.response.data.message || 'Validasi gagal');
-      } else {
-        setMessage('Terjadi kesalahan. Silakan coba lagi.');
-      }
-    }
+    post(route('register.attempt', {}, false, Ziggy), {
+      onSuccess: () => {
+        reset('password', 'password_confirmation');
+      },
+    });
   };
 
   return (
@@ -86,6 +47,8 @@ export default function Register() {
 
         {/* Form */}
         <div className="w-full md:w-8/12 p-8 bg-[#2B1B54] text-white flex flex-col justify-center relative overflow-hidden">
+
+          {/* Background animations */}
           <dotlottie-player
             src="https://lottie.host/2c9557a7-b65b-4d41-8e57-d6e566c92891/0uJzquhaU2.lottie"
             background="transparent"
@@ -110,20 +73,19 @@ export default function Register() {
             </div>
 
             {message && (
-              <div className={`mb-4 p-3 text-sm rounded text-center bg-red-100 text-red-800 border border-red-300`}>
+              <div className={`mb-4 p-3 text-sm rounded text-center ${flash.error ? 'bg-red-100 text-red-800 border border-red-300' : 'bg-green-100 text-green-800 border border-green-300'}`}>
                 {message}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6 p-5 max-w-md w-full rounded-lg shadow-md bg-white bg-opacity-20 backdrop-blur-lg">
+            <form onSubmit={submit} className="space-y-6 p-5 max-w-md w-full rounded-lg shadow-md bg-white bg-opacity-20 backdrop-blur-lg">
               {/* Email */}
               <div>
                 <label className="block mb-1">Email</label>
                 <input
                   type="email"
-                  name="email"
                   value={data.email}
-                  onChange={handleChange}
+                  onChange={(e) => setData('email', e.target.value)}
                   className="w-full px-4 py-2 rounded bg-gray-100 text-gray-800"
                   required
                 />
@@ -135,9 +97,8 @@ export default function Register() {
                 <label className="block mb-1">Kata Sandi</label>
                 <input
                   type="password"
-                  name="password"
                   value={data.password}
-                  onChange={handleChange}
+                  onChange={(e) => setData('password', e.target.value)}
                   className="w-full px-4 py-2 rounded bg-gray-100 text-gray-800"
                   required
                 />
@@ -149,9 +110,8 @@ export default function Register() {
                 <label className="block mb-1">Konfirmasi Kata Sandi</label>
                 <input
                   type="password"
-                  name="password_confirmation"
                   value={data.password_confirmation}
-                  onChange={handleChange}
+                  onChange={(e) => setData('password_confirmation', e.target.value)}
                   className="w-full px-4 py-2 rounded bg-gray-100 text-gray-800"
                   required
                 />
@@ -163,9 +123,8 @@ export default function Register() {
                 <input
                   id="terms"
                   type="checkbox"
-                  name="terms"
                   checked={data.terms}
-                  onChange={handleChange}
+                  onChange={(e) => setData('terms', e.target.checked)}
                 />
                 <label htmlFor="terms" className="text-sm">
                   Saya menyetujui{' '}
@@ -181,7 +140,7 @@ export default function Register() {
                 disabled={processing}
                 className="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded disabled:opacity-50"
               >
-                {processing ? 'Mendaftarkan...' : 'Daftar'}
+                Daftar
               </button>
 
               <p className="text-center text-sm">

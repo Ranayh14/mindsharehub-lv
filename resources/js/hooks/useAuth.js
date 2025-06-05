@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
 
 export default function useAuth() {
+  const [isChecking, setIsChecking] = useState(true);
+
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const user = localStorage.getItem('user');
@@ -16,18 +18,18 @@ export default function useAuth() {
 
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    // Verify token validity
     axios.get('/api/me')
       .then((response) => {
-        // Token valid, update user data if needed
         localStorage.setItem('user', JSON.stringify(response.data));
+        setIsChecking(false);
       })
       .catch(() => {
-        // Token invalid, clear storage and redirect
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         delete axios.defaults.headers.common['Authorization'];
         router.visit('/login');
       });
   }, []);
+
+  return { isChecking };
 }
