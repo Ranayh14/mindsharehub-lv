@@ -96,12 +96,14 @@ export default function Sidebar() {
 
         {showMenu && (
           <div className="absolute bottom-16 left-0 w-full bg-[#1e1f2c] border border-gray-600 rounded shadow-lg z-10">
-            <button
-              onClick={handleLogout}
+            <Link
+              href={route('logout')}
+              method="post"
+              as="button"
               className="w-full text-left p-3 text-red-400 hover:bg-red-500 hover:text-white transition"
             >
               Logout
-            </button>
+            </Link>
           </div>
         )}
       </div>

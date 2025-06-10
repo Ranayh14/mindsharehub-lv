@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -63,61 +64,82 @@ class AuthController extends Controller
                 'email'    => 'required|email',
                 'password' => 'required',
             ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Input tidak valid',
-                'errors'  => $e->errors(),
-            ], 422);
-        }
 
-        // Login berhasil?
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+            Log::info('Attempting login', [
+                'email' => $request->email
+            ]);
 
-            // Cek apakah akun dibanned
-            if ($user->is_banned) {
-                Auth::logout();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akun Anda telah diblokir: ' . $user->ban_reason,
-                ], 403);
+            // Login berhasil?
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
+
+                // Cek apakah akun dibanned
+                if ($user->is_banned) {
+                    Log::warning('Login ditolak: Akun dibanned', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'ban_reason' => $user->ban_reason
+                    ]);
+
+                    Auth::logout();
+                    return back()->withErrors(['email' => 'Akun Anda telah diblokir: ' . $user->ban_reason]);
+                }
+
+                Log::info('Login berhasil', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'roles' => $user->roles
+                ]);
+
+                $request->session()->regenerate();
+
+                // Redirect based on role
+                if ($user->roles === 'admin') {
+                    Log::info('Redirecting admin to admin dashboard');
+                    return redirect()->route('admin.dashboard');
+                } else {
+                    Log::info('Redirecting user to dashboard');
+                    return redirect()->route('dashboard');
+                }
             }
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            Log::warning('Login gagal: Kredensial tidak valid', [
+                'email' => $request->email
+            ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Login berhasil',
-                'token'   => $token,
-                'user'    => [
-                    'id'       => $user->id,
-                    'username' => $user->username,
-                    'email'    => $user->email,
-                    'roles'    => $user->roles,
-                ],
-                'redirect' => $user->roles === 'admin' 
-                    ? route('admin.dashboard', [], false) 
-                    : route('dashboard', [], false),
+            return back()->withErrors([
+                'email' => 'Email atau password salah',
+            ]);
+
+        } catch (ValidationException $e) {
+            Log::warning('Login gagal: Validasi input tidak valid', [
+                'email' => $request->email,
+                'errors' => $e->errors()
+            ]);
+
+            return back()->withErrors($e->errors());
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage(), [
+                'email' => $request->email,
+                'exception' => $e
+            ]);
+
+            return back()->withErrors([
+                'email' => 'Terjadi kesalahan saat login. Silakan coba lagi.',
             ]);
         }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Email atau password salah',
-        ], 401);
     }
-    
-    
+
+
 
     public function logout(Request $request)
     {
-        $user = $request->user();
+        Auth::guard('web')->logout();
 
-        $user->currentAccessToken()->delete();
+        $request->session()->invalidate();
 
-        return response()->json([
-            'message' => 'Logged out. Token deleted',
-        ], 200);
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 }

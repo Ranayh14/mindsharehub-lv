@@ -10,7 +10,7 @@ class Content extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'title', 'notes', 'image'
+        'user_id', 'title', 'image', 'content', 'is_published', 'send_notification'
     ];
 
     public function user() {

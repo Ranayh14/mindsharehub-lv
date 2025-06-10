@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import AdminSidebar from '@/Components/AdminSidebar';
 import { useDarkMode } from '../../Contexts/DarkModeContext';
 
-export default function Report({ reports, commentReports }) {
+export default function Report({ reports = [], commentReports = [] }) {
     const { darkMode } = useDarkMode();
 
     return (

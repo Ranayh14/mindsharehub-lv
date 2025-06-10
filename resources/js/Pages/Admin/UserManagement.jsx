@@ -1,27 +1,33 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState, Fragment, useEffect } from 'react';
 import { Head, useForm } from '@inertiajs/react';
-import AdminSidebar from '@/Components/AdminSidebar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Dialog, Transition } from '@headlessui/react';
 import {
-    faBan,
     faUnlock,
     faSearch,
     faSun,
     faMoon,
     faFilter,
     faExclamationCircle,
-    faStar
+    faStar,
+    faBan
 } from '@fortawesome/free-solid-svg-icons';
 import { toast, Toaster } from 'react-hot-toast';
 import { useDarkMode } from '../../Contexts/DarkModeContext';
+import AdminLayout from '@/Layouts/AdminLayout';
 
-export default function UserManagement({ users }) {
+export default function UserManagement({ auth, users }) {
     const { darkMode, toggleDarkMode } = useDarkMode();
     const [searchTerm, setSearchTerm] = useState('');
     const [showBanModal, setShowBanModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
+    const [usersData, setUsersData] = useState(Array.isArray(users) ? users : []);
+
+    useEffect(() => {
+        setUsersData(Array.isArray(users) ? users : []);
+    }, [users]);
+
     const { data, setData, post, processing, reset } = useForm({
         reason: '',
     });
@@ -55,7 +61,7 @@ export default function UserManagement({ users }) {
         }
     };
 
-    const filteredUsers = users
+    const filteredUsers = (usersData || [])
         .filter(user => {
             const matchesSearch = (user.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -70,9 +76,11 @@ export default function UserManagement({ users }) {
         });
 
     const handleBanUser = (user) => {
+        console.log('handleBanUser called', user);
         setSelectedUser(user);
         setData('reason', '');
         setShowBanModal(true);
+        console.log('showBanModal set to', true);
     };
 
     const submitBan = () => {
@@ -98,11 +106,11 @@ export default function UserManagement({ users }) {
                 setSelectedUser(null);
                 toast.success(`Successfully banned ${selectedUser.username}`);
 
-                const updatedUser = { ...selectedUser, is_banned: true };
-                const userIndex = users.findIndex(u => u.id === selectedUser.id);
-                if (userIndex !== -1) {
-                    users[userIndex] = updatedUser;
-                }
+                setUsersData(prevUsers =>
+                    prevUsers.map(user =>
+                        user.id === selectedUser.id ? { ...user, is_banned: true } : user
+                    )
+                );
             },
             onError: (error) => {
                 console.error('Ban error:', error);
@@ -118,7 +126,11 @@ export default function UserManagement({ users }) {
         }, {
             preserveScroll: true,
             onSuccess: () => {
-                window.location.reload();
+                setUsersData(prevUsers =>
+                    prevUsers.map(user =>
+                        user.id === userId ? { ...user, is_banned: false } : user
+                    )
+                );
             },
             onError: (errors) => {
                 console.error('Unban error:', errors);
@@ -127,20 +139,19 @@ export default function UserManagement({ users }) {
     };
 
     return (
-        <>
-            <Head title="Pengaturan Pengguna" />
+        <AdminLayout user={auth.user}>
+            <Head title="User Management" />
             <div className={`min-h-screen flex transition-colors duration-300 ${
                 darkMode ? 'bg-[#202225]' : 'bg-gray-50'
             }`}>
                 <Toaster position="top-right" />
-                <AdminSidebar darkMode={darkMode} />
                 <main className="flex-1 p-8">
                     {/* Header Section */}
                     <div className="mb-8 flex justify-between items-center">
                         <div>
                             <h2 className={`text-2xl font-bold ${
                                 darkMode ? 'text-gray-100' : 'text-gray-800'
-                            }`}>Pengaturan Pengguna</h2>
+                            }`}>User Management</h2>
                             <p className={`mt-1 ${
                                 darkMode ? 'text-gray-400' : 'text-gray-600'
                             }`}>Kelola pengguna dan hak akses platform</p>
@@ -316,17 +327,19 @@ export default function UserManagement({ users }) {
                                                         Aktifkan
                                                     </button>
                                                 ) : (
-                                                    <button
-                                                        onClick={() => handleBanUser(user)}
-                                                        className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                                                            darkMode
-                                                            ? 'bg-red-500 bg-opacity-10 text-red-400 hover:bg-opacity-20'
-                                                            : 'text-red-700 bg-red-100 hover:bg-red-200'
-                                                        }`}
-                                                    >
-                                                        <FontAwesomeIcon icon={faBan} className="w-4 h-4 mr-2" />
-                                                        Ban
-                                                    </button>
+                                                    user.email !== 'admin@example.com' && (
+                                                        <button
+                                                            onClick={() => handleBanUser(user)}
+                                                            className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                                                                darkMode
+                                                                ? 'bg-red-500 bg-opacity-10 text-red-400 hover:bg-opacity-20'
+                                                                : 'text-red-700 bg-red-100 hover:bg-red-200'
+                                                            }`}
+                                                        >
+                                                            <FontAwesomeIcon icon={faBan} className="w-4 h-4 mr-2" />
+                                                            Ban
+                                                        </button>
+                                                    )
                                                 )}
                                             </td>
                                         </tr>
@@ -339,6 +352,7 @@ export default function UserManagement({ users }) {
 
                 {/* Ban Modal */}
                 <Transition appear show={showBanModal} as={Fragment}>
+                    {console.log('Modal show prop:', showBanModal)}
                     <Dialog as="div" className="relative z-10" onClose={() => !processing && setShowBanModal(false)}>
                         <Transition.Child
                             as={Fragment}
@@ -445,6 +459,6 @@ export default function UserManagement({ users }) {
                     </Dialog>
                 </Transition>
             </div>
-        </>
+        </AdminLayout>
     );
 }

@@ -96,8 +96,8 @@ class AuthController extends Controller
                     'email'    => $user->email,
                     'roles'    => $user->roles,
                 ],
-                'redirect' => $user->roles === 'admin' 
-                    ? route('admin.dashboard', [], false) 
+                'redirect' => $user->roles === 'admin'
+                    ? route('admin.dashboard', [], false)
                     : route('dashboard', [], false),
             ]);
         }
@@ -107,17 +107,22 @@ class AuthController extends Controller
             'message' => 'Email atau password salah',
         ], 401);
     }
-    
-    
+
+
 
     public function logout(Request $request)
     {
         $user = $request->user();
 
-        $user->currentAccessToken()->delete();
+        if ($user) {
+            $user->currentAccessToken()->delete();
+            return response()->json([
+                'message' => 'Logged out. Token deleted',
+            ], 200);
+        }
 
         return response()->json([
-            'message' => 'Logged out. Token deleted',
-        ], 200);
+            'message' => 'Logout failed: User not authenticated or token already revoked.',
+        ], 401);
     }
 }

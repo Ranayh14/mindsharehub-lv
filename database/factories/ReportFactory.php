@@ -15,10 +15,10 @@ class ReportFactory extends Factory
     {
         return [
             'post_id' => Post::factory(),
-            'reported_by' => User::factory(),
+            'user_id' => User::factory(),
             'reason' => $this->faker->word,
             'description' => $this->faker->text,
-            'status' => 'aktif',
+            'status' => 'pending',
         ];
     }
 }

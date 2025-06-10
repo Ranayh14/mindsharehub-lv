@@ -1,3 +1,5 @@
+// Temporary comment to force Vite rebuild due to persistent casing issue.
+// ... existing code ...
 import React from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AdminSidebar from '@/Components/AdminSidebar';
@@ -87,16 +89,6 @@ export default function Index({ contents }) {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center justify-center space-x-3">
-                                                            <Link
-                                                                href={route('admin.content.show', content.id)}
-                                                                className={`p-2 rounded-lg ${
-                                                                    darkMode
-                                                                        ? 'bg-[#4f545c] hover:bg-[#5865F2] text-[#DCDDDE]'
-                                                                        : 'bg-gray-100 hover:bg-indigo-500 text-gray-600 hover:text-white'
-                                                                } transition-colors duration-200`}
-                                                            >
-                                                                <FontAwesomeIcon icon={faEye} className="w-4 h-4" />
-                                                            </Link>
                                                             <Link
                                                                 href={route('admin.content.edit', content.id)}
                                                                 className={`p-2 rounded-lg ${

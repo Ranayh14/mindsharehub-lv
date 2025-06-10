@@ -17,7 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'user' => \App\Http\Middleware\UserMiddleware::class,
+            'token.auth' => \App\Http\Middleware\TokenAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

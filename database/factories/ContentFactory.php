@@ -15,8 +15,8 @@ class ContentFactory extends Factory
         return [
             'user_id' => User::factory(),
             'title' => $this->faker->sentence,
-            'notes' => $this->faker->text,
-            'image' => $this->faker->imageUrl(),
+            'content' => $this->faker->paragraph,
+            'image_path' => $this->faker->imageUrl(),
         ];
     }
 }

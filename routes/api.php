@@ -24,6 +24,10 @@ Route::middleware('guest')->group(function () {
 
 // Authenticated routes (Require sanctum token or similar)
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Illuminate\Http\Request $request) {
+        return $request->user();
+    })->name('api.user');
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
 
     // Post routes

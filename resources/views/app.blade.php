@@ -5,6 +5,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title inertia>{{ config('app.name') }}</title>
   @viteReactRefresh
+  @routes
   @vite(['resources/css/app.css', 'resources/js/app.jsx'])
   @inertiaHead
 </head>

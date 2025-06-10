@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useDarkMode } from '@/Contexts/DarkModeContext';
+import { route } from 'ziggy-js';
 import {
     faHome,
     faUserFriends,
@@ -31,7 +32,7 @@ export default function AdminSidebar() {
             </div>
             <nav className="p-4 space-y-1">
                 <Link
-                    href="/admin/dashboard"
+                    href={route('admin.dashboard')}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                         darkMode
                             ? 'text-[#B9BBBE] hover:bg-[#36393f] hover:text-[#DCDDDE]'
@@ -43,7 +44,7 @@ export default function AdminSidebar() {
                 </Link>
 
                 <Link
-                    href="/admin/pengaturan-pengguna"
+                    href={route('admin.user_management')}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                         darkMode
                             ? 'text-[#B9BBBE] hover:bg-[#36393f] hover:text-[#DCDDDE]'
@@ -55,7 +56,7 @@ export default function AdminSidebar() {
                 </Link>
 
                 <Link
-                    href="/admin/kelola-konten"
+                    href={route('admin.content_management')}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                         darkMode
                             ? 'text-[#B9BBBE] hover:bg-[#36393f] hover:text-[#DCDDDE]'
@@ -67,7 +68,7 @@ export default function AdminSidebar() {
                 </Link>
 
                 <Link
-                    href="/admin/kelola-komunitas"
+                    href={route('admin.community_control')}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                         darkMode
                             ? 'text-[#B9BBBE] hover:bg-[#36393f] hover:text-[#DCDDDE]'
@@ -79,7 +80,7 @@ export default function AdminSidebar() {
                 </Link>
 
                 <Link
-                    href="/admin/report"
+                    href={route('admin.reports')}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                         darkMode
                             ? 'text-[#B9BBBE] hover:bg-[#36393f] hover:text-[#DCDDDE]'
@@ -94,7 +95,7 @@ export default function AdminSidebar() {
                     darkMode ? 'border-[#202225]' : 'border-gray-100'
                 }`}>
                     <Link
-                        href="/logout"
+                        href={route('logout')}
                         method="post"
                         as="button"
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${

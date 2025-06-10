@@ -23,13 +23,13 @@ class ContentManagementController extends BaseController
     public function index()
     {
         \Log::info('Accessing content management index');
-        
+
         $contents = Content::with('user')
             ->orderBy('created_at', 'desc')
             ->get();
-            
+
         \Log::info('Contents retrieved:', ['count' => $contents->count()]);
-        
+
         $mappedContents = $contents->map(function ($content) {
                 return [
                     'id' => $content->id,
@@ -44,7 +44,7 @@ class ContentManagementController extends BaseController
                     ] : null
                 ];
             });
-            
+
         \Log::info('Contents mapped and ready to render');
 
         return Inertia::render('Admin/ContentManagement/Index', [
@@ -85,33 +85,56 @@ class ContentManagementController extends BaseController
             // TODO: Implement notification logic here
         }
 
-        return redirect()->route('admin.content.index')->with('success', 'Content created successfully');
+        return redirect()->route('admin.content_management')->with('success', 'Content created successfully');
     }
 
     public function update(Request $request, Content $content)
     {
-        $validated = $request->validate([
+        \Log::info('Content update request received.');
+        \Log::info('Request all:', $request->all());
+
+        $rules = [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_published' => 'boolean',
             'send_notification' => 'boolean'
-        ]);
+        ];
 
+        $validated = $request->validate($rules);
+
+        // Handle image upload or removal
         if ($request->hasFile('image')) {
+            // Delete old image if exists
             if ($content->image_path) {
                 Storage::disk('public')->delete($content->image_path);
             }
-            $validated['image_path'] = $request->file('image')->store('content-images', 'public');
+            // Store new image
+            $content->image_path = $request->file('image')->store('content-images', 'public');
+        } elseif ($request->input('image') === null && $content->image_path) {
+            // If image is explicitly set to null from frontend and old image exists, delete it
+            Storage::disk('public')->delete($content->image_path);
+            $content->image_path = null;
+        } elseif (!$request->has('image') && $request->isMethod('PUT')) {
+            // If image field is not present in the request (meaning no change from frontend),
+            // do nothing with image_path, retain existing one.
+        } else {
+            // For other cases, if no image is uploaded or explicitly removed, keep existing image_path
+            // This handles cases where image input was simply left untouched
         }
 
-        $content->update($validated);
+        // Remove the 'image' field from validated data before updating the model
+        // as 'image' is for file upload, not a database column.
+        unset($validated['image']);
+
+        $content->fill($validated);
+        $content->save();
 
         if ($content->send_notification) {
             // TODO: Implement notification logic
         }
 
-        return redirect()->route('admin.content.index')->with('success', 'Content updated successfully');
+        return redirect()->route('admin.content_management')->with('success', 'Content updated successfully');
     }
 
     public function destroy(Content $content)
@@ -121,7 +144,7 @@ class ContentManagementController extends BaseController
         }
 
         $content->delete();
-        return redirect()->route('admin.content.index')->with('success', 'Content deleted successfully');
+        return redirect()->route('admin.content_management')->with('success', 'Content deleted successfully');
     }
 
     public function show(Content $content)

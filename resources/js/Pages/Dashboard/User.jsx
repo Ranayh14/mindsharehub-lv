@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { usePage, Head, Link } from '@inertiajs/react';
+import { usePage, Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import PostCard from '@/Components/PostCard';
 import NewPostForm from '@/Components/NewPostForm';
@@ -8,24 +8,57 @@ import useAuth from '@/hooks/useAuth';
 
 export default function UserDashboard() {
   const { posts, auth } = usePage().props;
-  const currentUser = auth.user;
+  const currentUser = auth?.user;
+
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    const user = localStorage.getItem('user');
+
+    if (!token || !user) {
+      router.visit('/login');
+      return;
     }
-    if (!token) {
+
+    try {
+      const userData = JSON.parse(user);
+
+      // Set token di header axios
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Verifikasi token
+      axios.get('/api/user')
+        .then(response => {
+          if (response.data.roles === 'admin') {
+            router.visit('/admin/dashboard');
+          }
+        })
+        .catch(() => {
+          // Jika token tidak valid, hapus dan redirect ke login
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          delete axios.defaults.headers.common['Authorization'];
+          router.visit('/login');
+        });
+    } catch (error) {
+      console.error('Error in UserDashboard:', error);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      delete axios.defaults.headers.common['Authorization'];
       router.visit('/login');
     }
   }, []);
 
-  useAuth();  
-  
+  useAuth();
+
+  if (!currentUser) {
+    return null; // atau loading spinner
+  }
+
   return (
     <DashboardLayout>
       <Head title="Dashboard" />
 
-      <NewPostForm currentUser={currentUser} /> {/* Menampilkan form buat postingan */}
+      <NewPostForm currentUser={currentUser} />
 
       <div className="space-y-6 mt-6">
         {posts.data.length === 0 ? (

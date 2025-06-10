@@ -13,11 +13,13 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DiaryController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ContentManagementController;
 
 /*
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 | Web Routes
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 |
 | Here is where you can register web routes for your application.
 |
@@ -44,20 +46,12 @@ Route::post('/logout', [AuthController::class, 'logout'])
      ->middleware('auth')
      ->name('logout');
 
-// Authenticated routes
-Route::middleware('auth')->group(function () {
+// User routes
+Route::middleware(['auth', 'user'])->group(function () {
     // User Dashboard
-    Route::get('/admin/dashboard', [PageController::class, 'showAdminDashboard'])->name('admin.dashboard');
-    
-    Route::get('/dashboard', DashboardController::class)
-         ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'userDashboard'])->name('dashboard');
 
-    // Admin Dashboard (optional; requires “admin” gate)
-    Route::get('/admin/dashboard', [PageController::class, 'showAdminDashboard'])
-         ->can('admin')
-         ->name('admin.dashboard');
-
-    // Route::get('/diary', [PageController::class, 'showDiary'])->name('diary');
+    // Route::get('/diary', [DiaryController::class, 'index'])->name('diary');
     //     Route::prefix('api')->group(function() {
     //     Route::get('/diaries', [DiaryController::class, 'index']);
     //     Route::post('/diaries', [DiaryController::class, 'store']);
@@ -84,4 +78,23 @@ Route::middleware('auth')->group(function () {
     // // Report post or comment
     // Route::post('/reports', [ReportController::class, 'store'])
     //      ->name('reports.store');
+});
+
+// Admin routes
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/pengaturan-pengguna', [AdminController::class, 'userManagement'])->name('admin.user_management');
+    Route::post('/users/{user}/ban', [AdminController::class, 'banUser'])->name('admin.ban_user');
+    Route::post('/users/{user}/unban', [AdminController::class, 'unbanUser'])->name('admin.unban_user');
+    Route::controller(ContentManagementController::class)->group(function () {
+        Route::get('/kelola-konten', 'index')->name('admin.content_management');
+        Route::get('/kelola-konten/create', 'create')->name('admin.content.create');
+        Route::post('/kelola-konten', 'store')->name('admin.content.store');
+        Route::get('/kelola-konten/{content}', 'show')->name('admin.content.show');
+        Route::get('/kelola-konten/{content}/edit', 'edit')->name('admin.content.edit');
+        Route::put('/kelola-konten/{content}', 'update')->name('admin.content.update');
+        Route::delete('/kelola-konten/{content}', 'destroy')->name('admin.content.destroy');
+    });
+    Route::get('/kelola-komunitas', [AdminController::class, 'communityControl'])->name('admin.community_control');
+    Route::get('/report', [AdminController::class, 'reports'])->name('admin.reports');
 });
