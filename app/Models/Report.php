@@ -10,14 +10,23 @@ class Report extends Model
     use HasFactory;
 
     protected $fillable = [
-        'post_id', 'reported_by', 'reason', 'description', 'status'
+        'post_id',
+        'comment_id',
+        'reported_by',
+        'reason',
+        'description',
+        'status'
     ];
 
     public function post() {
         return $this->belongsTo(Post::class);
     }
 
-    public function user() {
+    public function comment() {
+        return $this->belongsTo(Comment::class);
+    }
+
+    public function reporter() {
         return $this->belongsTo(User::class, 'reported_by');
     }
 }

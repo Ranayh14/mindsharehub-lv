@@ -1,92 +1,70 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const ProfilePictureModal = ({ isOpen, onClose, onUpdate }) => {
-    const [selectedPicture, setSelectedPicture] = useState('');
-    const [feedback, setFeedback] = useState('');
+export default function ProfilePictureModal({ show, onClose, user }) {
+    const [selectedPicture, setSelectedPicture] = useState(null);
+    
+    if (!show) return null;
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
+    const profilePictures = Array.from({ length: 12 }, (_, i) => `pp${i + 1}.png`);
+
+    const handleSave = async () => {
+        if (!selectedPicture) return;
+
         try {
-            const response = await axios.post('/api/profile/update-picture', {
+            await axios.post('/profile/update-picture', {
                 profile_picture: selectedPicture
             });
-
-            if (response.data.status === 'success') {
-                setFeedback('Profile picture updated successfully');
-                onUpdate();
-                setTimeout(() => {
-                    onClose();
-                    setFeedback('');
-                }, 2000);
-            }
+            window.location.reload(); // Refresh untuk menampilkan perubahan
         } catch (error) {
-            setFeedback(error.response?.data?.message || 'Error updating profile picture');
+            console.error('Error updating profile picture:', error);
         }
     };
 
-    if (!isOpen) return null;
-
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-            <div className="bg-gray-700 rounded-lg p-6 max-w-3xl w-full">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-white">Change Profile Picture</h3>
+            <div className="bg-gray-700 rounded-lg shadow w-full max-w-2xl">
+                <div className="flex items-center justify-between p-4 border-b border-gray-600">
+                    <h3 className="text-xl font-semibold text-white">Ganti Profile Picture</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-white">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <i className="fi fi-rr-cross text-xl"></i>
                     </button>
                 </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="p-6">
                     <div className="grid grid-cols-4 gap-4">
-                        {[...Array(12)].map((_, i) => (
-                            <label key={i} className="cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="profile_picture"
-                                    value={`pp${i + 1}.png`}
-                                    onChange={(e) => setSelectedPicture(e.target.value)}
-                                    className="hidden"
-                                />
+                        {profilePictures.map((pic) => (
+                            <button
+                                key={pic}
+                                onClick={() => setSelectedPicture(pic)}
+                                className={`relative rounded-full overflow-hidden ${
+                                    selectedPicture === pic ? 'ring-2 ring-blue-500' : ''
+                                }`}
+                            >
                                 <img
-                                    src={`/assets/pp${i + 1}.png`}
-                                    alt={`Profile ${i + 1}`}
-                                    className={`w-20 h-20 object-cover rounded-full border-2 
-                                        ${selectedPicture === `pp${i + 1}.png` ? 'border-blue-500' : 'border-transparent'}
-                                        hover:border-blue-500`}
+                                    src={`/images/${pic}`}
+                                    alt={`Profile ${pic}`}
+                                    className="w-full h-full object-cover"
                                 />
-                            </label>
+                            </button>
                         ))}
                     </div>
-
-                    {feedback && (
-                        <div className={`text-center ${feedback.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
-                            {feedback}
-                        </div>
-                    )}
-
-                    <div className="flex justify-end space-x-4">
+                    <div className="flex justify-end space-x-3 mt-6">
                         <button
-                            type="button"
                             onClick={onClose}
-                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
                         >
                             Cancel
                         </button>
                         <button
-                            type="submit"
-                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                            onClick={handleSave}
+                            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                            disabled={!selectedPicture}
                         >
-                            Save
+                            Simpan
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );
-};
-
-export default ProfilePictureModal;
+}

@@ -79,6 +79,10 @@ class User extends Authenticatable
         return $this->hasMany(Report::class, 'reported_by');
     }
 
+    public function reports() {
+        return $this->hasMany(Report::class, 'reported_by');
+    }
+
     public function reportedComments() {
         return $this->hasMany(CommentReport::class, 'user_id');
     }

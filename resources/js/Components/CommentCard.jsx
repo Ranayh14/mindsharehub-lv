@@ -6,6 +6,7 @@ import { Inertia } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/react';
 import EditCommentModal from './Modal/EditCommentModal';
 import ConfirmDeleteModal from './Modal/ConfirmDeleteModal';
+import ReportCommentModal from './Modal/ReportCommentModal';
 
 export default function CommentCard({ comment, onCommentUpdate }) {
   const { auth } = usePage().props;
@@ -16,6 +17,7 @@ export default function CommentCard({ comment, onCommentUpdate }) {
   const [showActions, setShowActions] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const handleLike = async () => {
     try {
@@ -70,17 +72,18 @@ export default function CommentCard({ comment, onCommentUpdate }) {
     }
   };
 
+  // resources/js/Components/CommentCard.jsx
   const handleReport = async () => {
     try {
-      await axios.post(route('reports.store', {}, false, Ziggy), {
-        comment_id: localComment.id,
-        reason: 'inappropriate',
-        description: 'Komentar tidak pantas'
-      });
-      alert('Komentar telah dilaporkan');
-      setShowActions(false);
+        await axios.post(route('reports.store', {}, false, Ziggy), {
+            comment_id: localComment.id,  // Kirim comment_id sebagai gantinya
+            reason: 'inappropriate',
+            description: 'Komentar tidak pantas'
+        });
+        alert('Komentar telah dilaporkan');
+        setShowActions(false);
     } catch (err) {
-      console.error('Gagal melaporkan komentar:', err.response);
+        console.error('Gagal melaporkan komentar:', err.response);
     }
   };
 
@@ -119,12 +122,22 @@ export default function CommentCard({ comment, onCommentUpdate }) {
                 </>
               ) : (
                 <>
-                  <button onClick={handleReport} className="w-full text-left hover:bg-orange-600 hover:text-white p-2 rounded transition-colors">
-                    Laporkan
-                  </button>
-                  <button onClick={() => setShowActions(false)} className="w-full text-left hover:bg-gray-600 p-2 rounded transition-colors">
-                    Batal
-                  </button>
+                  {!isOwner && (
+                    <>
+                        <button 
+                            onClick={() => setReportModalOpen(true)} 
+                            className="w-full text-left hover:bg-orange-600 hover:text-white p-2 rounded transition-colors"
+                        >
+                            Laporkan
+                        </button>
+                        <button 
+                            onClick={() => setShowActions(false)} 
+                            className="w-full text-left hover:bg-gray-600 p-2 rounded transition-colors"
+                        >
+                            Batal
+                        </button>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -152,6 +165,12 @@ export default function CommentCard({ comment, onCommentUpdate }) {
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDelete}
         message="Anda yakin ingin menghapus komentar ini?"
+      />
+      <ReportCommentModal 
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        commentId={comment.id}
+        content={comment.comment}
       />
     </div>
   );

@@ -21,6 +21,7 @@ use App\Http\Controllers\CommunityManagementController;
 use App\Http\Controllers\AdminReportController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |---------------------------------------------------------------------------
@@ -95,8 +96,9 @@ Route::middleware('auth')->group(function () {
     });
 
     // Report post or comment
-    Route::post('/reports', [ReportController::class, 'store'])
-         ->name('reports.store');
+    Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
 
         // Admin Routes
     Route::middleware(['auth', 'can:admin'])->group(function () {

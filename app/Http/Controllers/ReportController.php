@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Report;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ReportController extends Controller
 {
@@ -14,10 +16,29 @@ class ReportController extends Controller
             'reason'     => 'required|string|max:50',
             'description'=> 'required|string|max:2000',
         ]);
+
+        // Buat array data untuk report
+        $reportData = [
+            'reason' => $data['reason'],
+            'description' => $data['description'],
+            'reported_by' => $r->user()->id,
+            'status' => 'pending'
+        ];
+
+        // Tambahkan post_id atau comment_id sesuai yang dikirim
+        if (isset($data['post_id'])) {
+            $reportData['post_id'] = $data['post_id'];
+        }
+        if (isset($data['comment_id'])) {
+            $reportData['comment_id'] = $data['comment_id'];
+        }
+
+        Report::create($reportData);
     
-        $r->user()->reports()->create($data + ['reported_by' => $r->user()->id]);
-    
-        return response()->json(['status'=>'success']);
+        if ($r->wantsJson()) {
+            return response()->json(['status' => 'success']);
+        }
+
+        return back()->with('success', 'Laporan berhasil dikirim');
     }
-    
 }

@@ -81,27 +81,26 @@ class ProfileController extends Controller
         $request->validate([
             'profile_picture' => 'required|string'
         ]);
-
+    
         $allowed_pp = [];
         for ($i = 1; $i <= 12; $i++) {
             $allowed_pp[] = "pp{$i}.png";
         }
-
+    
         if (!in_array($request->profile_picture, $allowed_pp)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Invalid profile picture selection'
             ], 400);
         }
-
+    
         $user = Auth::user();
         $user->profile_picture = $request->profile_picture;
         $user->save();
-
+    
         return response()->json([
-            'status' => 'success', 
-            'message' => 'Profile picture updated successfully',
-            'profile_picture' => $user->profile_picture
+            'status' => 'success',
+            'message' => 'Profile picture updated successfully'
         ]);
     }
 }

@@ -249,7 +249,12 @@ export default function PostCard({ post }) {
 
       {/* Modals */}
       <EditPostModal open={editModalOpen} onClose={() => setEditModalOpen(false)} post={localPost} onEdit={handleEdit} />
-      <ReportPostModal open={reportModalOpen} onClose={() => setReportModalOpen(false)} postId={reportPostId} content={localPost.content} />
+      <ReportPostModal 
+        open={reportModalOpen} 
+        onClose={() => setReportModalOpen(false)} 
+        postId={localPost.id}  // Pastikan menggunakan localPost.id
+        content={localPost.content} 
+      />
       <ConfirmDeleteModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
