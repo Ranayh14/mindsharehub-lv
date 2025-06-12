@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\User;
+use App\Models\Post;
+use App\Models\Comment;
+use App\Models\PostLike;
 
 class PageController extends Controller
 {
@@ -30,5 +34,22 @@ class PageController extends Controller
     public function showDiary()
     {
         return Inertia::render('Diary'); // Render halaman Diary menggunakan InertiaJS
+    }
+
+// PageController.php
+    public function showProfile()
+    {
+        $user = auth()->user();
+        
+        return Inertia::render('Profile/Index', [
+            'auth' => [
+                'user' => $user
+            ],
+            'userData' => [
+                'posts' => $user->posts()->with(['user', 'comments'])->latest()->get(),
+                'comments' => $user->comments()->with(['post.user'])->latest()->get(),
+                'likedPosts' => $user->likedPosts()->with(['user', 'comments'])->latest()->get()
+            ]
+        ]);
     }
 }

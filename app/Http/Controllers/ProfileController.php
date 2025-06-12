@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\User;
+use App\Models\Post;
+use App\Models\Comment;
+use App\Models\PostLike;
 
 class ProfileController extends Controller
 {
@@ -59,5 +63,45 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    public function getUserProfile()
+    {
+        $user = Auth::user();
+        return response()->json([
+            'user' => $user,
+            'posts' => $user->posts()->with(['user', 'comments'])->latest()->get(),
+            'comments' => $user->comments()->with(['post', 'post.user'])->latest()->get(),
+            'likes' => $user->likedPosts()->with(['user', 'comments'])->latest()->get()
+        ]);
+    }
+
+    public function updateProfilePicture(Request $request)
+    {
+        $request->validate([
+            'profile_picture' => 'required|string'
+        ]);
+
+        $allowed_pp = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $allowed_pp[] = "pp{$i}.png";
+        }
+
+        if (!in_array($request->profile_picture, $allowed_pp)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid profile picture selection'
+            ], 400);
+        }
+
+        $user = Auth::user();
+        $user->profile_picture = $request->profile_picture;
+        $user->save();
+
+        return response()->json([
+            'status' => 'success', 
+            'message' => 'Profile picture updated successfully',
+            'profile_picture' => $user->profile_picture
+        ]);
     }
 }

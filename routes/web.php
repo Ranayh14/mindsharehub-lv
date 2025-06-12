@@ -20,6 +20,7 @@ use App\Http\Controllers\BanController;
 use App\Http\Controllers\CommunityManagementController;
 use App\Http\Controllers\AdminReportController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ProfileController;
 
 /*
 |---------------------------------------------------------------------------
@@ -59,7 +60,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)
          ->name('dashboard');
 
-    // Admin Dashboard (optional; requires “admin” gate)
+    Route::get('/profile', [PageController::class, 'showProfile'])->name('profile');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile/data', [ProfileController::class, 'getUserProfile']);
+    Route::post('/profile/update-picture', [ProfileController::class, 'updateProfilePicture']);
+
+    // Admin Dashboard (optional; requires "admin" gate)
     Route::get('/admin/dashboard', [PageController::class, 'showAdminDashboard'])
          ->can('admin')
          ->name('admin.dashboard');

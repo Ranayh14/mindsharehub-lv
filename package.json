@@ -1,4 +1,5 @@
 {
+    "proxy": "http://localhost:8000",
     "private": true,
     "type": "module",
     "scripts": {
@@ -6,13 +7,13 @@
         "dev": "vite"
     },
     "devDependencies": {
-        "@headlessui/react": "^2.0.0",
-        "@inertiajs/react": "^2.0.8",
+        "@headlessui/react": "^2.2.4",
+        "@inertiajs/react": "^2.0.12",
         "@tailwindcss/forms": "^0.5.3",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-react": "^4.4.0",
         "autoprefixer": "^10.4.21",
-        "axios": "^1.8.2",
+        "axios": "^1.9.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.2.0",
         "postcss": "^8.5.3",
@@ -23,9 +24,11 @@
     },
     "dependencies": {
         "@dotlottie/player-component": "^2.7.12",
+        "@heroicons/react": "^2.2.0",
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/inertia-react": "^0.8.1",
         "flowbite": "^3.1.2",
-        "ziggy-js": "^2.5.2"
+        "react-router-dom": "^7.6.2",
+        "ziggy-js": "^2.5.3"
     }
 }

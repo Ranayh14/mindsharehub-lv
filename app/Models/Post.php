@@ -38,6 +38,11 @@ protected $appends = ['is_liked','created_at_human','total_comments','likes_coun
         return $this->hasMany(PostLike::class);
     }
 
+    public function likes()
+    {
+        return $this->belongsToMany(User::class, 'post_likes', 'post_id', 'user_id');
+    }
+
     /**
      * Relasi many-to-many ke User yang menyukai post
      */
