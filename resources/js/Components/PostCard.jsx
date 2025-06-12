@@ -33,18 +33,16 @@ export default function PostCard({ post }) {
 
   const handleLike = async () => {
     try {
-      const res = await axios.post(route('posts.like', { post: localPost.id }, false, Ziggy));
-  
-      // Update local state immediately
+      const response = await axios.post(route('posts.like', { post: localPost.id }));
+      
+      // Update local state with the response data
       setLocalPost(prev => ({
         ...prev,
-        is_liked: res.data.status === 'liked',
-        likes_count: res.data.likes_count,
-        total_comments: res.data.total_comments
+        is_liked: response.data.status === 'liked',
+        likes_count: response.data.likes_count
       }));
-      
-    } catch (err) {
-      console.error('Gagal like:', err.response);
+    } catch (error) {
+      console.error('Error liking post:', error);
     }
   };
   

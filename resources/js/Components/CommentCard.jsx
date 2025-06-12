@@ -21,27 +21,28 @@ export default function CommentCard({ comment, onCommentUpdate }) {
 
   const handleLike = async () => {
     try {
-      const res = await axios.post(route('comments.like', { comment: localComment.id }, false, Ziggy));
+      const response = await axios.post(route('comments.like', { comment: localComment.id }));
       
+      // Update local state with the response data
       setLocalComment(prev => ({
         ...prev,
-        is_liked: res.data.status === 'liked',
-        likes_count: res.data.likes_count
+        is_liked: response.data.status === 'liked',
+        likes_count: response.data.likes_count
       }));
-      
+
       if (onCommentUpdate) {
         onCommentUpdate(localComment.id, {
-          is_liked: res.data.status === 'liked',
-          likes_count: res.data.likes_count
+          is_liked: response.data.status === 'liked',
+          likes_count: response.data.likes_count
         });
       }
-    } catch (err) {
-      console.error('Gagal like komentar:', err.response);
+    } catch (error) {
+      console.error('Error liking comment:', error);
     }
   };
 
   const handleDelete = () => {
-    Inertia.delete(route('comments.destroy', { comment: localComment.id }, false, Ziggy), {
+    Inertia.delete(route('comments.destroy', { comment: localComment.id }), {
       onSuccess: () => {
         if (onCommentUpdate) {
           onCommentUpdate(localComment.id, null); // null indicates deletion
@@ -53,7 +54,7 @@ export default function CommentCard({ comment, onCommentUpdate }) {
   const handleEdit = async (newContent) => {
     try {
       const response = await axios.put(
-        route('comments.update', { comment: localComment.id }, false, Ziggy),
+        route('comments.update', { comment: localComment.id }),
         { comment: newContent }
       );
 

@@ -43,21 +43,23 @@ class PostController extends Controller
 
     public function toggleLike(Post $post)
     {
-        $user = request()->user();
-        $post->likedUsers()->toggle($user);
-    
-        // Hitung jumlah likes yang baru
-        $likes = $post->likedUsers()->count();
-    
-        // Perbarui likes_count di database
-        $post->updateQuietly(['likes_count' => $likes]);
-    
-        // Kembalikan data setelah like diperbarui
-        return response()->json([
-            'status' => $post->likedUsers()->contains($user) ? 'liked' : 'unliked',
-            'likes_count' => $likes,
-            'total_comments' => $post->total_comments,
-        ]);
+        try {
+            $user = request()->user();
+            $post->likedUsers()->toggle($user);
+
+            $isLiked = $post->likedUsers()->where('users.id', $user->id)->exists();
+            $likesCount = $post->likedUsers()->count();
+
+            return response()->json([
+                'status' => $isLiked ? 'liked' : 'unliked',
+                'likes_count' => $likesCount
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error processing like',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
       
 
@@ -83,7 +85,7 @@ class PostController extends Controller
         return response()->json([
             'content' => $post->content,
             'is_liked' => $post->is_liked,  // Misalnya kita juga ingin mengembalikan status like
-            'likes_count' => $post->likes_count,
+            'likes_count' => $post->likedUsers()->count(),
             'total_comments' => $post->total_comments,
         ]);
     }

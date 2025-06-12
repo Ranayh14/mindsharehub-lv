@@ -13,14 +13,18 @@ class Post extends Model
     protected $fillable = [
         'user_id',
         'content',
-        'image_path',
-        'likes_count'
+        'image_path'
     ];
 
     /**
      * Tambahkan attribute custom otomatis di-serialize
      */
-protected $appends = ['is_liked','created_at_human','total_comments','likes_count'];
+    protected $appends = [
+        'is_liked',
+        'created_at_human',
+        'total_comments',
+        'likes_count'
+    ];
 
     /**
      * Relasi ke User pemilik post
@@ -71,18 +75,18 @@ protected $appends = ['is_liked','created_at_human','total_comments','likes_coun
     /**
      * Accessor: is_liked
      */
-    public function getIsLikedAttribute(): bool
+    public function getIsLikedAttribute()
     {
-        if (! Auth::check()) {
+        if (!Auth::check()) {
             return false;
         }
-        return $this->likedUsers->contains(fn($user) => $user->id === Auth::id());
+        return $this->likedUsers()->where('users.id', Auth::id())->exists();
     }
 
     /**
      * Accessor: created_at_human
      */
-    public function getCreatedAtHumanAttribute(): string
+    public function getCreatedAtHumanAttribute()
     {
         return $this->created_at->diffForHumans();
     }
@@ -90,7 +94,7 @@ protected $appends = ['is_liked','created_at_human','total_comments','likes_coun
     /**
      * Accessor: total_comments
      */
-    public function getTotalCommentsAttribute(): int
+    public function getTotalCommentsAttribute()
     {
         return $this->comments()->count();
     }
