@@ -49,16 +49,27 @@ export default function PostCard({ post }) {
   };
   
 
-  const submitComment = e => {
+  const submitComment = async (e) => {
     e.preventDefault();
-    commentForm.post(route('comments.store', {}, false, Ziggy), {
-      preserveScroll: true,
-      onSuccess: () => {
-        commentForm.reset();
-        setReplyingTo(null); // Reset setelah komentar dikirim
-        Inertia.replace(route('dashboard')); // Pindahkan kembali ke /dashboard
-      }
-    });
+    try {
+      const response = await axios.post(route('comments.store'), {
+        post_id: post.id,
+        comment: commentFormData
+      });
+
+      // Update local state with new comment
+      setLocalPost(prev => ({
+        ...prev,
+        comments: [response.data.comment, ...prev.comments],
+        total_comments: prev.total_comments + 1
+      }));
+
+      // Reset form
+      setCommentFormData('');
+      setReplyingTo(null);
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+    }
   };
 
   const handleCommentLike = async (commentId) => {

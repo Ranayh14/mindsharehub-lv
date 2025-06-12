@@ -26,19 +26,13 @@ class CommentController extends Controller
             'parent_id' => $data['parent_id'] ?? null,
         ]);
 
-        return Inertia::render('Dashboard/User', [
-            'posts' => Post::with([
-                'user:id,username,profile_picture',
-                'likedUsers:id',
-                'comments' => fn ($q) => $q->with([
-                    'user:id,username,profile_picture',
-                    'likedUsers:id',
-                ])->latest(),
-            ])
-            ->withCount('comments')
-            ->latest()
-            ->paginate(10)
-            ->through(fn ($p) => $p->append(['is_liked','created_at_human'])),
+        // Load the relationships needed for the response
+        $comment->load(['user:id,username,profile_picture', 'likedUsers:id']);
+        $comment->append(['is_liked', 'created_at_human']);
+
+        return response()->json([
+            'message' => 'Komentar berhasil ditambahkan',
+            'comment' => $comment
         ]);
     }
 
