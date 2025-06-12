@@ -45,19 +45,9 @@ class CommentController extends Controller
             $request->validate(['comment' => 'required|string|max:2000'])
         );
 
-        return Inertia::render('Dashboard/User', [
-            'posts' => Post::with([
-                'user:id,username,profile_picture',
-                'likedUsers:id',
-                'comments' => fn ($q) => $q->with([
-                    'user:id,username,profile_picture',
-                    'likedUsers:id',
-                ])->latest(),
-            ])
-            ->withCount('comments')
-            ->latest()
-            ->paginate(10)
-            ->through(fn ($p) => $p->append(['is_liked','created_at_human'])),
+        return response()->json([
+            'message' => 'Komentar berhasil diupdate',
+            'comment' => $comment->comment
         ]);
     }
 
@@ -65,48 +55,31 @@ class CommentController extends Controller
     public function destroy(Comment $comment)
     {
         Gate::authorize('delete', $comment);
-
         $comment->delete();
-
-        return Inertia::render('Dashboard/User', [
-            'posts' => Post::with([
-                'user:id,username,profile_picture',
-                'likedUsers:id',
-                'comments' => fn ($q) => $q->with([
-                    'user:id,username,profile_picture',
-                    'likedUsers:id',
-                ])->latest(),
-            ])
-            ->withCount('comments')
-            ->latest()
-            ->paginate(10)
-            ->through(fn ($p) => $p->append(['is_liked','created_at_human'])),
-        ]);
+        return response()->json(['message' => 'Komentar berhasil dihapus']);
     }
 
     /* ─────────────────── LIKE / UNLIKE ─────────────────── */
     public function toggleLike(Comment $comment)
     {
-        Gate::authorize('like', $comment);
+        try {
+            Gate::authorize('like', $comment);
+            
+            $user = request()->user();
+            $comment->likedUsers()->toggle($user);
 
-        $user = request()->user();
-        $comment->likedUsers()->toggle($user);
+            $isLiked = $comment->likedUsers()->where('users.id', $user->id)->exists();
+            $likesCount = $comment->likedUsers()->count();
 
-        $likes_count = $comment->likedUsers()->count();
-
-        return Inertia::render('Dashboard/User', [
-            'posts' => Post::with([
-                'user:id,username,profile_picture',
-                'likedUsers:id',
-                'comments' => fn ($q) => $q->with([
-                    'user:id,username,profile_picture',
-                    'likedUsers:id',
-                ])->latest(),
-            ])
-            ->withCount('comments')
-            ->latest()
-            ->paginate(10)
-            ->through(fn ($p) => $p->append(['is_liked','created_at_human'])),
-        ]);
+            return response()->json([
+                'status' => $isLiked ? 'liked' : 'unliked',
+                'likes_count' => $likesCount
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error processing like',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

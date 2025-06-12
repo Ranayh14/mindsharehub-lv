@@ -11,57 +11,59 @@ class Comment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'post_id', 'user_id', 'parent_id', 'comment', 'likes'
+        'post_id',
+        'user_id',
+        'parent_id',
+        'comment'
     ];
 
-    public function post() {
+    protected $appends = [
+        'is_liked',
+        'likes_count',
+        'created_at_human'
+    ];
+
+    public function post()
+    {
         return $this->belongsTo(Post::class);
     }
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function parent() {
+    public function parent()
+    {
         return $this->belongsTo(Comment::class, 'parent_id');
     }
 
-    public function likes() {
-        return $this->hasMany(CommentLike::class);
-    }
-
-    public function reports() {
-        return $this->hasMany(CommentReport::class);
-    }
-
-    public function likedUsers() 
+    public function likedUsers()
     {
-        return $this->belongsToMany(User::class,'comment_likes')
+        return $this->belongsToMany(User::class, 'comment_likes')
                     ->withTimestamps();
     }
 
-    protected $appends = ['is_liked','likes_count','created_at_human'];
-
-    public function getIsLikedAttribute(): bool
+    public function reports()
     {
-        return Auth::check() && $this->likedUsers
-               ->contains(fn ($u) => $u->id === Auth::id());
+        return $this->hasMany(Report::class);
     }
 
-    public function getTotalLikesAttribute(): int
+    public function getIsLikedAttribute()
     {
-        return $this->likedUsers()->count();
+        if (!Auth::check()) {
+            return false;
+        }
+        return $this->likedUsers()->where('users.id', Auth::id())->exists();
     }
 
-    public function getCreatedAtHumanAttribute(): string
+    public function getCreatedAtHumanAttribute()
     {
         return $this->created_at->diffForHumans();
     }
 
-    // app/Models/Comment.php
-
-    public function getLikesCountAttribute(): int
+    public function getLikesCountAttribute()
     {
-        return $this->likes()->count();  // Menghitung jumlah likes terkait dengan komentar ini
+        return $this->likedUsers()->count();
     }
 }

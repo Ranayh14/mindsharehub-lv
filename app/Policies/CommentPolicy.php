@@ -16,7 +16,7 @@ class CommentPolicy
     }
 
     /**
-     * Hanya pemilik komentar atau admin yang boleh meng‑edit.
+     * Hanya pemilik komentar atau admin yang boleh meng‑edit.
      */
     public function update(User $user, Comment $comment): bool
     {
@@ -24,7 +24,7 @@ class CommentPolicy
     }
 
     /**
-     * Hanya pemilik komentar atau admin yang boleh meng‑hapus.
+     * Hanya pemilik komentar atau admin yang boleh meng‑hapus.
      */
     public function delete(User $user, Comment $comment): bool
     {
@@ -32,11 +32,11 @@ class CommentPolicy
     }
 
     /**
-     * Pengguna boleh menyukai komentar orang lain.
+     * Pengguna boleh menyukai komentar apa saja.
      */
     public function like(User $user, Comment $comment): bool
     {
-        return $user->id !== $comment->user_id;
+        return true;
     }
 
     /**
@@ -44,6 +44,6 @@ class CommentPolicy
      */
     public function report(User $user, Comment $comment): bool
     {
-        return $this->like($user, $comment);
+        return $user->id !== $comment->user_id;
     }
 }
